@@ -10,32 +10,27 @@ struct ContentView : View {
             
             HStack {
                 TextField($model.text, placeholder: Text("Search"))
-                    .font(.largeTitle)
-                    .font(.system(size: 24))
-                    .padding(.top, 16)
-                    .padding(.leading, 16)
                 Button(action: {
                     self.model.loadUser()
                 }) {
                     Text("Done")
-                        .bold()
-                        .font(Font.system(size: 24))
-                        .padding(.top, 16)
-                        .padding(.trailing, 32)
                 }
             }
             
-            HStack {
-                Text(model.user.login).bold().font(.system(.title))
-                Text("\(model.user.id)").bold().font(.system(.title))
-                showImage().clipShape(Circle())
+            model.user.map { user in
+                VStack {
+                    Text(user.login)
+                    Text("\(user.id)")
+                    
+                    user.avatarURL.map({self.showImage(avatarURL: $0)}).clipShape(Circle())
+                }
             }
         }
     }
     
-    func showImage() -> Image {
-        guard let url = URL(string: model.user.avatarURL), let data = try? Data(contentsOf: url), let image = UIImage(data: data) else {
-            return Image(systemName: "photo")
+    func showImage(avatarURL: String?) -> Image? {
+        guard let avatarURL = avatarURL, let url = URL(string: avatarURL), let data = try? Data(contentsOf: url), let image = UIImage(data: data) else {
+            return nil
         }
         return Image(uiImage: image)
     }
@@ -55,7 +50,7 @@ class Model: BindableObject {
     
     var text: String = ""
     
-    var user: User = User(login: "", id: 0, avatarURL: "") {
+    var user: User? {
         didSet {
             didChange.send(self)
         }
@@ -75,7 +70,7 @@ class Model: BindableObject {
 struct User: Decodable, Hashable {
     let login: String
     let id: Int
-    let avatarURL: String
+    let avatarURL: String?
     
     enum CodingKeys: String, CodingKey {
         case login
